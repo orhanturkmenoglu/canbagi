@@ -1,0 +1,1 @@
+CanBagi connects donors and hospitals using intelligent matching algorithms, digitalizing the blood donation process. In emergencies, it ensures timely notifications reach the right donor, saving precious seconds.
