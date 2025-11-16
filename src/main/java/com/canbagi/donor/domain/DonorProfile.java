@@ -1,28 +1,17 @@
 package com.canbagi.donor.domain;
 
 
-import com.canbagi.user.domain.User;
+import com.canbagi.common.base.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.Instant;
-import java.util.UUID;
+import lombok.*;
 
 @Entity
 @Table(name = "donor_profile")
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DonorProfile {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+@Builder
+public class DonorProfile extends BaseEntity {
 
     @Column(nullable = false)
     private String firstName;
@@ -41,11 +30,5 @@ public class DonorProfile {
 
     @OneToOne
     @JoinColumn(name = "address_id")
-    private Address Address;
-
-    @CreationTimestamp
-    private Instant createdDate ;
-
-    @UpdateTimestamp
-    private Instant lastModifiedDate;
+    private Address address;
 }
