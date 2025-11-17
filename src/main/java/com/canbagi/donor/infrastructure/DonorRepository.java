@@ -20,5 +20,5 @@ public interface DonorRepository extends JpaRepository<DonorProfile, UUID> {
     @Query("from DonorProfile d where  d.address.city = :city")
     List<DonorProfile> findByAddress_City(@Param("city") String city);
 
-    boolean existByEmail(String email);
+    boolean existsByEmail(String email);
 }
