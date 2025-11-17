@@ -3,8 +3,9 @@ package com.canbagi.donor.application.impl;
 import com.canbagi.donor.application.DonorService;
 import com.canbagi.donor.application.dto.request.AddressRequestDTO;
 import com.canbagi.donor.application.dto.request.DonorProfileRequestDTO;
-import com.canbagi.donor.application.dto.response.AddressResponseDTO;
 import com.canbagi.donor.application.dto.response.DonorProfileResponseDTO;
+import com.canbagi.donor.application.mapper.DonorMapper;
+import com.canbagi.donor.application.mapper.DonorRequestMapper;
 import com.canbagi.donor.domain.Address;
 import com.canbagi.donor.domain.DonorProfile;
 import com.canbagi.donor.infrastructure.AddressRepository;
@@ -16,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,27 +25,28 @@ public class DonorServiceImpl implements DonorService {
 
     private final DonorRepository donorRepository;
     private final AddressRepository addressRepository;
+    private final DonorMapper donorMapper;               // Entity ↔ DTO ↔ Response
+    private final DonorRequestMapper donorRequestMapper; // Request → Entity
 
     @Override
     @Transactional
-    public DonorProfileResponseDTO createDonor(DonorProfileRequestDTO donorProfileRequestDTO) {
-        log.info("[CREATE] Donor request received: {}", donorProfileRequestDTO);
+    public DonorProfileResponseDTO createDonor(DonorProfileRequestDTO request) {
+        log.info("[CREATE] Donor request received: {}", request);
 
-        // Address entity oluştur
-        Address address = mapToAddress(donorProfileRequestDTO.getAddress());
-        address = addressRepository.save(address);
-        log.debug("[CREATE] Address saved: {}", address);
+        if (donorRepository.existByEmail(request.getEmail())) {
+            throw new RuntimeException("Donor already exists with email: " + request.getEmail());
+        }
 
-        // Donor entity oluştur
-        DonorProfile donor = mapToDonor(donorProfileRequestDTO);
-        donor.setId(UUID.randomUUID());
-        donor.setActive(true);
-        donor.setAddress(address);
+        // Request → Entity conversion
+        DonorProfile donor = donorRequestMapper.toEntity(request);
+        log.debug("[CREATE] Donor mapped from request: {}", donor);
 
+        // Address otomatik maplendi, override gerekmedikçe dokunma
         DonorProfile savedDonor = donorRepository.save(donor);
-        log.info("[CREATE] Donor saved successfully with ID: {}", savedDonor.getId());
 
-        return mapToResponse(savedDonor);
+        log.info("[CREATE] Donor saved successfully: {}", savedDonor.getId());
+
+        return donorMapper.toDto(savedDonor);
     }
 
     @Override
@@ -57,7 +58,8 @@ public class DonorServiceImpl implements DonorService {
                 .orElseThrow(() -> new RuntimeException("Donor not found with email: " + email));
 
         log.info("[GET] Donor found: {}", donor.getId());
-        return mapToResponse(donor);
+
+        return donorMapper.toDto(donor);
     }
 
     @Override
@@ -66,39 +68,41 @@ public class DonorServiceImpl implements DonorService {
         log.info("[GET] Searching donors by blood type: {}", bloodType);
 
         List<DonorProfile> donors = donorRepository.findByBloodType(bloodType);
-        return donors.stream()
-                .map(this::mapToResponse)
-                .toList();
+
+        return donorMapper.toDtoList(donors);
     }
 
     @Override
     @Transactional
-    public DonorProfileResponseDTO updateDonor(UUID donorId, DonorProfileRequestDTO donorProfileRequestDTO) {
+    public DonorProfileResponseDTO updateDonor(UUID donorId, DonorProfileRequestDTO request) {
         log.info("[UPDATE] Donor update request received for ID: {}", donorId);
 
-        DonorProfile existingDonor = donorRepository.findById(donorId)
+        DonorProfile donor = donorRepository.findById(donorId)
                 .orElseThrow(() -> new RuntimeException("Donor not found with id: " + donorId));
 
-        log.debug("[UPDATE] Existing donor: {}", existingDonor);
+        log.debug("[UPDATE] Existing donor: {}", donor);
 
-        // Update basic fields
-        existingDonor.setFirstName(donorProfileRequestDTO.getFirstName());
-        existingDonor.setLastName(donorProfileRequestDTO.getLastName());
-        existingDonor.setEmail(donorProfileRequestDTO.getEmail());
-        existingDonor.setPhone(donorProfileRequestDTO.getPhone());
-        existingDonor.setBloodType(donorProfileRequestDTO.getBloodType());
+        // Basic fields update
+        donor.setFirstName(request.getFirstName());
+        donor.setLastName(request.getLastName());
+        donor.setEmail(request.getEmail());
+        donor.setPhone(request.getPhone());
+        donor.setBloodType(request.getBloodType());
 
-        // Update address
-        Address address = existingDonor.getAddress();
-        updateAddress(address, donorProfileRequestDTO.getAddress());
-        addressRepository.save(address);
+        Address address = donor.getAddress();
+        updatedAddress(request);
+
+        donor.setAddress(address);
+
+
         log.debug("[UPDATE] Address updated: {}", address);
 
-        donorRepository.save(existingDonor);
+        DonorProfile savedDonor = donorRepository.save(donor);
         log.info("[UPDATE] Donor updated successfully: {}", donorId);
 
-        return mapToResponse(existingDonor);
+        return donorMapper.toDto(savedDonor);
     }
+
 
     @Override
     @Transactional
@@ -109,6 +113,7 @@ public class DonorServiceImpl implements DonorService {
                 .orElseThrow(() -> new RuntimeException("Donor not found with id: " + donorId));
 
         Address address = donor.getAddress();
+
         donorRepository.delete(donor);
         log.info("[DELETE] Donor deleted successfully: {}", donorId);
 
@@ -118,61 +123,17 @@ public class DonorServiceImpl implements DonorService {
         }
     }
 
-    // ----------------- Mapper / Helper Methods -----------------
-
-    private Address mapToAddress(AddressRequestDTO dto) {
-        Address address = new Address();
-        address.setStreet(dto.getStreet());
-        address.setCity(dto.getCity());
-        address.setState(dto.getDistrict());
-        address.setPostalCode(dto.getPostalCode());
-        address.setCountry(dto.getCountry());
-        return address;
-    }
-
-    private void updateAddress(Address address, AddressRequestDTO dto) {
-        address.setStreet(dto.getStreet());
-        address.setCity(dto.getCity());
-        address.setState(dto.getDistrict());
-        address.setPostalCode(dto.getPostalCode());
-        address.setCountry(dto.getCountry());
-    }
-
-    private DonorProfile mapToDonor(DonorProfileRequestDTO dto) {
-        DonorProfile donor = new DonorProfile();
-        donor.setFirstName(dto.getFirstName());
-        donor.setLastName(dto.getLastName());
-        donor.setEmail(dto.getEmail());
-        donor.setPhone(dto.getPhone());
-        donor.setBloodType(dto.getBloodType());
-        donor.setActive(dto.getActive());
-        return donor;
-    }
-
-    private DonorProfileResponseDTO mapToResponse(DonorProfile donor) {
-        Address addr = donor.getAddress();
-        AddressResponseDTO addressResponse = new AddressResponseDTO(
-                addr.getCountry(),
-                addr.getCity(),
-                addr.getState(),
-                addr.getStreet(),
-                addr.getPostalCode(),
-                addr.getCreatedDate(),
-                addr.getLastModifiedDate()
-        );
-
-        return new DonorProfileResponseDTO(
-                donor.getId(),
-                donor.getFirstName(),
-                donor.getLastName(),
-                donor.getEmail(),
-                donor.getPhone(),
-                donor.getBloodType(),
-                donor.getActive(),
-                donor.getAddress() != null ? addressResponse : null,
-                donor.getCreatedDate(),
-                donor.getLastModifiedDate()
-        );
+    private static void updatedAddress(DonorProfileRequestDTO request) {
+        log.debug("[UPDATE] Updating address: {}", request.getAddress());
+        AddressRequestDTO addressRequestDTO = request.getAddress();
+        log.debug("[UPDATE] Address request: {}", addressRequestDTO);
+        if (addressRequestDTO != null) {
+            addressRequestDTO.setCountry(addressRequestDTO.getCountry());
+            addressRequestDTO.setCity(addressRequestDTO.getCity());
+            addressRequestDTO.setDistrict(addressRequestDTO.getDistrict());
+            addressRequestDTO.setStreet(addressRequestDTO.getStreet());
+            addressRequestDTO.setPostalCode(addressRequestDTO.getPostalCode());
+        }
     }
 
 }
