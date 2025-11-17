@@ -17,7 +17,8 @@ public interface DonorRepository extends JpaRepository<DonorProfile, UUID> {
 
     List<DonorProfile> findByBloodType(String bloodType);
 
-    @Query("from DonorProfile d where  d.Address.city = :city")
+    @Query("from DonorProfile d where  d.address.city = :city")
     List<DonorProfile> findByAddress_City(@Param("city") String city);
 
+    boolean existByEmail(String email);
 }
