@@ -2,8 +2,10 @@ package com.canbagi.donor.application.dto.request;
 
 import com.canbagi.donor.domain.Address;
 import com.canbagi.donor.domain.DonorProfile;
+import com.canbagi.donor.domain.enums.BloodType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,11 +33,8 @@ public class DonorProfileRequestDTO {
     @Size(min = 10, max = 10, message ="Phone size must be 10 characters")
     private String phone;
 
-    @NotBlank(message = "Blood type cannot be blank")
-    private String bloodType;
-
-    @Builder.Default
-    private Boolean active = Boolean.FALSE;
+    @NotNull(message = "Blood type cannot be null")
+    private BloodType bloodType;
 
     private AddressRequestDTO address;
 

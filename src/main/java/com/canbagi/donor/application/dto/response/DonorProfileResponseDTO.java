@@ -7,7 +7,7 @@ import lombok.Builder;
 import java.time.Instant;
 import java.util.UUID;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+//@JsonInclude(JsonInclude.Include.NON_NULL)
 @Builder
 public record DonorProfileResponseDTO(
         UUID id,
