@@ -71,8 +71,8 @@ public class UserServiceImpl implements UserService {
                 .email(user.getEmail())
                 .roles(user.getRoles().stream().map(r -> r.getName()).toList())
                 .active(user.getActive())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
+                .createdAt(user.getCreatedDate())
+                .updatedAt(user.getLastModifiedDate())
                 .build();
     }
 }

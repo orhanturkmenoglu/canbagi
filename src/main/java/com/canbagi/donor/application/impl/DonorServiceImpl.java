@@ -12,6 +12,7 @@ import com.canbagi.donor.infrastructure.AddressRepository;
 import com.canbagi.donor.infrastructure.DonorRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,10 +34,9 @@ public class DonorServiceImpl implements DonorService {
     public DonorProfileResponseDTO createDonor(DonorProfileRequestDTO request) {
         log.info("[CREATE] Donor request received: {}", request);
 
-        if (donorRepository.existByEmail(request.getEmail())) {
+        if (donorRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Donor already exists with email: " + request.getEmail());
         }
-
         // Request → Entity conversion
         DonorProfile donor = donorRequestMapper.toEntity(request);
         log.debug("[CREATE] Donor mapped from request: {}", donor);
