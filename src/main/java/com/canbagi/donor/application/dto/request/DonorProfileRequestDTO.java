@@ -34,7 +34,7 @@ public class DonorProfileRequestDTO {
     @NotBlank(message = "Email cannot be blank")
     private String email;
 
-    @Schema(description = "Phone Number", example = "+1234567890")
+    @Schema(description = "Phone Number", example = "+123456789")
     @NotBlank(message = "Phone cannot be blank")
     @Size(min = 10, max = 10, message ="Phone size must be 10 characters")
     private String phone;
