@@ -2,6 +2,7 @@ package com.canbagi.user.application.impl;
 
 import com.canbagi.user.application.UserService;
 import com.canbagi.user.application.dto.response.UserResponseDTO;
+import com.canbagi.user.application.mapper.UserMapper;
 import com.canbagi.user.domain.User;
 import com.canbagi.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -26,7 +28,7 @@ public class UserServiceImpl implements UserService {
         log.info("[GET] Fetching user by id: {}", userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return mapToDTO(user);
+        return userMapper.toDto(user);
     }
 
     @Override
@@ -35,7 +37,7 @@ public class UserServiceImpl implements UserService {
         log.info("[GET] Fetching user by email: {}", email);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-        return mapToDTO(user);
+        return userMapper.toDto(user);
     }
 
     @Override
@@ -49,7 +51,7 @@ public class UserServiceImpl implements UserService {
     public List<UserResponseDTO> getAllUsers() {
         log.info("[GET] Fetching all users");
         return userRepository.findAll().stream()
-                .map(this::mapToDTO)
+                .map(userMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -62,17 +64,5 @@ public class UserServiceImpl implements UserService {
         user.setActive(false);
         userRepository.save(user);
         log.info("[DEACTIVATE] User deactivated successfully: {}", userId);
-    }
-
-    // Mapper
-    private UserResponseDTO mapToDTO(User user) {
-        return UserResponseDTO.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .roles(user.getRoles().stream().map(r -> r.getName()).toList())
-                .active(user.getActive())
-                .createdAt(user.getCreatedDate())
-                .updatedAt(user.getLastModifiedDate())
-                .build();
     }
 }

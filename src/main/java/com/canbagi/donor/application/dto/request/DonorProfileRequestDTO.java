@@ -1,7 +1,5 @@
 package com.canbagi.donor.application.dto.request;
 
-import com.canbagi.donor.domain.Address;
-import com.canbagi.donor.domain.DonorProfile;
 import com.canbagi.donor.domain.enums.BloodType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
