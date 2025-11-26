@@ -11,6 +11,8 @@ import java.util.UUID;
 @Builder
 public record UserResponseDTO(
         UUID id,
+        String firstName,
+        String lastName,
         String email,
         List<ERole> roles,
         boolean active,
