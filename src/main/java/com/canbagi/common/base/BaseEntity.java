@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -37,5 +36,9 @@ public class BaseEntity implements Serializable {
 
     @LastModifiedDate
     private Instant lastModifiedDate;
+
+    private boolean isActive = true;
+
+    private boolean isDeleted=false;
 
 }
