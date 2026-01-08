@@ -55,14 +55,4 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    @Transactional
-    public void deactivateUser(UUID userId) {
-        log.info("[DEACTIVATE] Deactivating user: {}", userId);
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        user.setIsActive(false);
-        userRepository.save(user);
-        log.info("[DEACTIVATE] User deactivated successfully: {}", userId);
-    }
 }

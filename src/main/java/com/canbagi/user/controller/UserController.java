@@ -37,10 +37,4 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    // ✅ Deactivate user (Admin only)
-    @PostMapping("/{id}/deactivate")
-    public ResponseEntity<Void> deactivateUser(@PathVariable UUID id) {
-        userService.deactivateUser(id);
-        return ResponseEntity.ok().build();
-    }
 }

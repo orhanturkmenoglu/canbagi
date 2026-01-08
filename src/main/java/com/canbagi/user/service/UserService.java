@@ -10,5 +10,4 @@ public interface UserService {
     UserResponseDTO getUserByEmail(String email);
     boolean existsByEmail(String email);
     List<UserResponseDTO> getAllUsers();
-    void deactivateUser(UUID userId);
 }
